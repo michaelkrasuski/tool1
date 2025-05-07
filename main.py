@@ -15,10 +15,8 @@ BADANIA_URL = "https://letsplay.ag3nts.org/data/badania.json?v=1743591162"
 
 @app.post("/webhook")
 async def webhook(data: InputData):
-    # Obsługa testu weryfikacyjnego
     if data.input.startswith("test"):
         return OutputData(output=data.input)
-    # Obsługa pobierania badań
     if data.input == "pobierz badania o podrozach w czasie":
         try:
             response = requests.get(BADANIA_URL)
@@ -31,7 +29,7 @@ async def webhook(data: InputData):
                         "uczelnia": badanie["uczelnia"],
                         "sponsor": badanie["sponsor"]
                     }
-                    return OutputData(output=json.dumps(result))
+                    return OutputData(output=json.dumps(result, ensure_ascii=False))
             return OutputData(output="Nie znaleziono badania")
         except requests.RequestException as e:
             return OutputData(output=f"Błąd: {str(e)}")
