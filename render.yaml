@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: webhook
+    name: tool1
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
