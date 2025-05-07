@@ -1,21 +1,38 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from pydantic import BaseModel
-import uvicorn
+import requests
+import json
 
 app = FastAPI()
 
-# Model dla danych wejściowych
 class InputData(BaseModel):
     input: str
 
-# Model dla danych wyjściowych
 class OutputData(BaseModel):
     output: str
 
+BADANIA_URL = "https://letsplay.ag3nts.org/data/badania.json?v=1743591162"
+
 @app.post("/webhook")
 async def webhook(data: InputData):
-    # Odbieramy dane z pola "input" i zwracamy to samo w polu "output"
-    return OutputData(output=data.input)
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Obsługa testu weryfikacyjnego
+    if data.input.startswith("test"):
+        return OutputData(output=data.input)
+    # Obsługa pobierania badań
+    if data.input == "pobierz badania o podrozach w czasie":
+        try:
+            response = requests.get(BADANIA_URL)
+            response.raise_for_status()
+            badania = response.json()
+            for badanie in badania:
+                if "podróże w czasie" in badanie["nazwa"].lower():
+                    result = {
+                        "nazwa": badanie["nazwa"],
+                        "uczelnia": badanie["uczelnia"],
+                        "sponsor": badanie["sponsor"]
+                    }
+                    return OutputData(output=json.dumps(result))
+            return OutputData(output="Nie znaleziono badania")
+        except requests.RequestException as e:
+            return OutputData(output=f"Błąd: {str(e)}")
+    return OutputData(output="Nieprawidłowe zapytanie")
